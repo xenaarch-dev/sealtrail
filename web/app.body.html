@@ -1,0 +1,198 @@
+<title>SealTrail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..900&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: freight manifest. Verdict + route strip on top, custody chain left, handover console right. */
+:root{
+  --bg:#E9ECEA;--panel:#F8F9F7;--ink:#12191C;--mute:#5B666B;--line:#CDD3D1;
+  --accent:#F2B705;--on-accent:#12191C;--ok:#1B7A50;--okbg:#DCEFE5;--bad:#B9322A;--badbg:#F6E0DD;--warn:#9A6A00;--warnbg:#F7EDCF;
+  --display:"Archivo","Arial Narrow",system-ui,sans-serif;--body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1416;--panel:#172024;--ink:#E6ECEA;--mute:#8E9A9E;--line:#2A363B;--accent:#F5C02B;--on-accent:#12191C;--ok:#45C28A;--okbg:#12301F;--bad:#F06A5E;--badbg:#3A1714;--warn:#E8B23A;--warnbg:#33290F;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0F1416;--panel:#172024;--ink:#E6ECEA;--mute:#8E9A9E;--line:#2A363B;--accent:#F5C02B;--on-accent:#12191C;--ok:#45C28A;--okbg:#12301F;--bad:#F06A5E;--badbg:#3A1714;--warn:#E8B23A;--warnbg:#33290F;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--body)}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:16px;padding-block:0 40px}
+header.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:18px;border-bottom:2px solid var(--ink)}
+.brand{display:flex;align-items:center;gap:10px}
+.seal{width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font:900 17px var(--display);box-shadow:inset 0 0 0 3px var(--panel),0 0 0 2px var(--accent)}
+.brand h1{margin:0;font:900 26px/1 var(--display);font-stretch:80%;letter-spacing:-.01em;text-transform:uppercase}
+.brand p{margin:2px 0 0;font-size:12px;color:var(--mute)}
+.top .ctl{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.eyebrow{font:700 11px var(--display);font-stretch:85%;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:0 0 10px}
+.manifest{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-bottom:1px solid var(--line);margin-bottom:18px}
+.manifest div{padding:10px 12px 10px 0;min-width:0}
+.manifest b{display:block;font:600 14px var(--body);overflow-wrap:anywhere}
+.manifest span{font:600 10px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+@media(max-width:700px){.manifest{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.verdict{display:flex;gap:16px;align-items:center;padding:18px 20px;border:2px solid currentColor;margin-bottom:16px}
+.verdict.ok{color:var(--ok);background:var(--okbg)}.verdict.bad{color:var(--bad);background:var(--badbg)}.verdict.open{color:var(--warn);background:var(--warnbg)}
+.verdict .stamp{font:900 13px var(--display);letter-spacing:.12em;text-transform:uppercase;border:2px solid currentColor;padding:6px 10px;transform:rotate(-4deg);white-space:nowrap}
+.verdict h2{margin:0;font:800 clamp(19px,3vw,26px)/1.15 var(--display);font-stretch:85%;text-wrap:balance}
+.verdict p{margin:4px 0 0;color:var(--ink);font-size:14px}
+.route{display:flex;align-items:stretch;overflow-x:auto;gap:0;margin-bottom:20px;padding-bottom:4px}
+.node{flex:0 0 auto;min-width:118px;max-width:150px;padding:8px 10px;border:1.5px solid var(--line);background:var(--panel);font-size:12px}
+.node b{display:block;font:700 13px/1.2 var(--display);font-stretch:90%}
+.node small{color:var(--mute);text-transform:capitalize}
+.link{flex:0 0 auto;min-width:56px;display:flex;flex-direction:column;justify-content:center;align-items:center;font:600 11px var(--mono);color:var(--mute);position:relative}
+.link:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px dashed var(--line)}
+.link span{position:relative;background:var(--bg);padding:0 4px}
+.link.hot{color:var(--bad)}.link.hot:before{border-top:2px solid var(--bad)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:22px}
+@media(max-width:940px){.grid{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);padding:18px;margin-bottom:18px;min-width:0}
+.chain{position:relative;padding-left:24px}
+.chain:before{content:"";position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--line)}
+.ev{position:relative;padding-block:2px 12px}
+.ev:before{content:"";position:absolute;left:-22px;top:5px;width:14px;height:14px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--panel)}
+.ev.dmg:before{background:var(--bad)}.ev.broken:before{background:var(--panel);box-shadow:0 0 0 3px var(--bad) inset,0 0 0 3px var(--panel)}
+.ev .who{font-weight:600}.ev .meta{color:var(--mute);font-size:13px}
+.ev .hash{font:400 11.5px var(--mono);color:var(--mute);overflow-wrap:anywhere}
+.cond{display:inline-block;font:700 11px var(--display);letter-spacing:.08em;text-transform:uppercase;padding:1px 7px;border:1.5px solid currentColor}
+.c-intact{color:var(--ok)}.c-minor_damage{color:var(--warn)}.c-major_damage,.c-missing_items{color:var(--bad)}
+.leg{margin:2px 0 14px;padding:10px 12px;border-left:4px solid var(--line);background:var(--bg);font-size:13.5px}
+.leg.hot{border-left-color:var(--bad);background:var(--badbg)}
+.leg .tag{float:right;font:800 11px var(--display);letter-spacing:.1em;text-transform:uppercase}
+.leg.hot .tag{color:var(--bad)}.leg .tag.clean{color:var(--ok)}
+.proof{font-size:14px}.proof ul{margin:8px 0 0;padding-left:18px;color:var(--bad)}
+.proof .head{font:400 12px var(--mono);color:var(--mute);overflow-wrap:anywhere;margin-top:8px}
+label{display:block;font:600 12px var(--body);color:var(--mute);margin:12px 0 5px}
+input,select,textarea{width:100%;padding:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;border-radius:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,.tile:focus-within{outline:3px solid var(--accent);outline-offset:1px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{position:relative;border:1.5px solid var(--line);padding:10px;cursor:pointer;font-weight:600;font-size:13px;display:flex;gap:8px;align-items:center;min-height:52px}
+.tile input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.tile i{width:12px;height:12px;border-radius:50%;flex:0 0 12px;background:currentColor}
+.tile:has(input:checked){border-color:var(--ink);background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--ink)}
+button{font:700 14px var(--body);border:2px solid var(--ink);padding:10px 14px;cursor:pointer;background:var(--panel);color:var(--ink);border-radius:0}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);width:100%;margin-top:16px;padding:13px;font:800 15px var(--display);letter-spacing:.06em;text-transform:uppercase}
+button.danger{border-color:var(--bad);color:var(--bad)}
+button.small{padding:6px 10px;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>button{flex:1 1 140px}
+.note{font-size:12.5px;color:var(--mute);margin:8px 0 0}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-block:8px 22px}
+.how div{min-width:0;font-size:13.5px}.how b{display:block;font:800 15px var(--display);font-stretch:90%;margin-bottom:2px}
+@media(max-width:700px){.how{grid-template-columns:1fr}}
+textarea.mono{font:12px var(--mono);min-height:120px}
+.result{margin-top:10px;font-size:13.5px}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:10px 16px;font-weight:600;max-width:calc(100% - 32px)}
+.sealfx{animation:press .6s ease-out}
+@keyframes press{0%{transform:scale(1.6) rotate(-20deg);opacity:0}60%{transform:scale(.92) rotate(3deg);opacity:1}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){.sealfx{animation:none}}
+details summary{cursor:pointer;font:700 14px var(--display);letter-spacing:.04em}
+.tour ol{margin:6px 0 0;padding-left:20px;font-size:13.5px}.tour li{margin-bottom:6px}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="seal" id="brandSeal">S</div><div><h1>SealTrail</h1><p>Every freight handover, co-signed and sealed</p></div></div>
+    <div class="ctl">
+      <label for="shipSel" style="margin:0">Shipment</label>
+      <select id="shipSel" style="width:auto"></select>
+      <button class="small" id="newShipBtn">New shipment</button>
+    </div>
+  </header>
+
+  <section class="how" aria-label="How SealTrail works">
+    <div><b>Both sides sign</b>Giver and receiver sign the same record of condition, weight, place and time with their own Ed25519 keys.</div>
+    <div><b>Records lock together</b>Each handover holds the SHA-256 of the one before it. Edit or delete anything and the chain breaks.</div>
+    <div><b>Liability falls out</b>The leg where condition worsened or weight dropped names the handler who held the goods.</div>
+  </section>
+
+  <div class="manifest" id="manifest"></div>
+  <div id="verdict" class="verdict"></div>
+  <p class="eyebrow">Route and custody</p>
+  <div class="route" id="route"></div>
+
+  <div class="grid">
+    <section>
+      <div class="panel"><p class="eyebrow">Custody chain, liability by leg</p><div class="chain" id="chain"></div></div>
+      <div class="panel"><p class="eyebrow">Integrity proof</p><div class="proof" id="proof"></div></div>
+      <div class="panel tour">
+        <p class="eyebrow">60-second judge demo</p>
+        <ol>
+          <li>Read the verdict: damage is pinned to <b>leg 3</b>, the last-mile carrier, with a 3.5 kg loss.</li>
+          <li>Under Attack simulator, press <b>Rewrite damage to intact</b>. The verdict flips to tampered and names the broken signatures.</li>
+          <li>Press <b>Reset demo</b>, then <b>Delete a handover</b>. The chain break is caught.</li>
+          <li>Reset again, copy the ledger from Export, and paste it into Verify. Anyone can check it without trusting us.</li>
+          <li>Record a new handover with a photo. Then use Check a photo with the same image to prove it matches the sealed fingerprint.</li>
+        </ol>
+      </div>
+    </section>
+
+    <aside>
+      <form class="panel" id="hoForm">
+        <p class="eyebrow">Record handover</p>
+        <label for="from">Handed over by (current holder)</label><select id="from"></select>
+        <label for="to">Received by</label><select id="to"></select>
+        <label for="loc">Location</label><input id="loc" placeholder="Vashi Truck Terminal" autocomplete="off">
+        <label>Condition at handover</label>
+        <div class="tiles" id="tiles"></div>
+        <label for="wt">Weight on scale (kg)</label><input id="wt" type="number" step="0.1" inputmode="decimal" placeholder="239.9">
+        <label for="photo">Condition photo</label><input id="photo" type="file" accept="image/*">
+        <p class="note">The photo is fingerprinted (SHA-256) in your browser. Only the fingerprint is sealed; the image never leaves the phone.</p>
+        <label for="notes">Notes</label><textarea id="notes" rows="2" placeholder="Wrap intact, 12 cartons counted"></textarea>
+        <button type="submit" class="primary">Both parties sign</button>
+        <p class="note">Demo: this browser holds every party's key so you can play all roles. In the field each key lives on that handler's own phone.</p>
+      </form>
+
+      <div class="panel">
+        <p class="eyebrow">Attack simulator</p>
+        <div class="row">
+          <button class="danger small" id="tEdit">Rewrite damage to intact</button>
+          <button class="danger small" id="tDel">Delete a handover</button>
+          <button class="danger small" id="tForge">Forge a signature</button>
+        </div>
+        <button class="small" id="resetBtn" style="width:100%;margin-top:8px">Reset demo</button>
+      </div>
+
+      <div class="panel">
+        <details open><summary>Export ledger</summary>
+          <p class="note">Hand this file to an insurer or mediator. It verifies offline here or with <code>node bin/verify.js</code>.</p>
+          <div class="row" style="margin-top:8px"><button class="small" id="copyBtn">Copy JSON</button><button class="small" id="dlBtn">Download</button></div>
+          <textarea id="exportBox" class="mono" readonly aria-label="Exported ledger JSON" style="margin-top:8px"></textarea>
+        </details>
+      </div>
+
+      <div class="panel">
+        <details><summary>Verify a ledger</summary>
+          <label for="verifyBox">Paste ledger JSON or choose a file</label>
+          <textarea id="verifyBox" class="mono" placeholder='{"id":"SHP-…","events":[…]}'></textarea>
+          <input id="verifyFile" type="file" accept=".json,application/json" style="margin-top:8px">
+          <button class="small" id="verifyBtn" style="margin-top:8px;width:100%">Verify independently</button>
+          <div class="result" id="verifyOut"></div>
+        </details>
+      </div>
+
+      <div class="panel">
+        <details><summary>Check a photo</summary>
+          <label for="checkPhoto">Does this photo match a sealed handover?</label>
+          <input id="checkPhoto" type="file" accept="image/*">
+          <div class="result" id="checkOut"></div>
+        </details>
+      </div>
+
+      <div class="panel">
+        <details><summary>Add a handler</summary>
+          <label for="pname">Name</label><input id="pname" placeholder="Vashi Cold Chain Depot">
+          <label for="prole">Role</label><select id="prole"><option>carrier</option><option>warehouse</option><option>shipper</option><option>receiver</option></select>
+          <button class="small" id="addP" style="margin-top:10px;width:100%">Issue signing key</button>
+        </details>
+      </div>
+
+      <div class="panel" id="newShipPanel" hidden>
+        <p class="eyebrow">New shipment</p>
+        <label for="nsId">Shipment ID</label><input id="nsId" placeholder="SHP-24018">
+        <label for="nsDesc">Goods</label><input id="nsDesc" placeholder="40 bags cement, 50 kg each">
+        <label for="nsO">Origin</label><input id="nsO" placeholder="Nashik">
+        <label for="nsD">Destination</label><input id="nsD" placeholder="Thane">
+        <div class="row" style="margin-top:10px"><button class="small" id="nsCreate">Create</button><button class="small" id="nsCancel">Cancel</button></div>
+      </div>
+    </aside>
+  </div>
+</div>
+<div id="toast" hidden></div>
+
+<script>/*NACL*/</script>
+<script>/*APP*/</script>
