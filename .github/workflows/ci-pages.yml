@@ -2,10 +2,10 @@ name: CI and Pages
 on:
   push: { branches: [main] }
   workflow_dispatch:
-permissions: { contents: read, pages: write, id-token: write }
+permissions: { contents: write }
 concurrency: { group: pages, cancel-in-progress: true }
 jobs:
-  test:
+  test-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,12 +13,13 @@ jobs:
         with: { node-version: 22 }
       - run: npm test
       - run: node scripts/build.js
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: web }
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    environment: { name: github-pages, url: "${{ steps.d.outputs.page_url }}" }
-    steps:
-      - id: d
-        uses: actions/deploy-pages@v4
+      # GitHub Pages serves the gh-pages branch. Publish the built single-file app there.
+      - name: Publish web/index.html to gh-pages
+        run: |
+          mkdir -p /tmp/site && cp web/index.html /tmp/site/ && touch /tmp/site/.nojekyll
+          cd /tmp/site
+          git init -q -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add -A && git commit -q -m "Deploy ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" gh-pages
